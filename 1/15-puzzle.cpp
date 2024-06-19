@@ -7,6 +7,7 @@ import <string_view>;
 import <ranges>;
 import <iostream>;
 import <exception>;
+import <cstring>;
 
 std::random_device rdev;
 std::mt19937 reng(rdev());
@@ -132,13 +133,20 @@ int main(int argc, char** argv)
 	try
 	{
 		if (argc > 16) {
-			board.fill(255);
+			memset(&board[0], 0xff, board.size() * 1);
 			for (int i = 0; i < 16; i++) {
-				const auto elem = std::stoi(argv[i]);
-				if (elem < 0 && elem >= 16)
+				const auto elem = std::stoi(argv[i+1]);
+				if (elem < 0 || elem > 15)
 					throw std::out_of_range(std::format("Out of range board element for index {}", i));
-				if (std::find(board.begin(), std::next(board.begin(), i), elem) != board.end())
-					throw std::runtime_error(std::format("{} at index {} has already been utilized", elem, i));
+
+				decltype(board)::pointer search = nullptr;
+				std::for_each(board.begin(), board.begin() + i, [&](auto& e) {
+					if (e == elem) search = &e;
+				});
+				if (search != nullptr)
+					throw std::runtime_error(std::format("{} at index {} has already been utilized", elem, search - &board[0]));
+
+				board[i] = elem;
 			}
 		} else if (argc != 1) {
 			throw std::runtime_error(std::format("Supply the entire board. Remaining {}", 16 - (argc-1)));
