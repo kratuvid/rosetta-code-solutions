@@ -6,6 +6,7 @@ import <random>;
 import <string_view>;
 import <ranges>;
 import <iostream>;
+import <exception>;
 
 std::random_device rdev;
 std::mt19937 reng(rdev());
@@ -126,8 +127,29 @@ void run()
 	}
 }
 
-int main()
+int main(int argc, char** argv)
 {
-	init();
-	run();
+	try
+	{
+		if (argc > 16) {
+			board.fill(255);
+			for (int i = 0; i < 16; i++) {
+				const auto elem = std::stoi(argv[i]);
+				if (elem < 0 && elem >= 16)
+					throw std::out_of_range(std::format("Out of range board element for index {}", i));
+				if (std::find(board.begin(), std::next(board.begin(), i), elem) != board.end())
+					throw std::runtime_error(std::format("{} at index {} has already been utilized", elem, i));
+			}
+		} else if (argc != 1) {
+			throw std::runtime_error(std::format("Supply the entire board. Remaining {}", 16 - (argc-1)));
+		}
+		else {
+			init();
+		}
+		run();
+	}
+	catch (std::exception& e)
+	{
+		std::println(stderr, "std::exception: {}", e.what());
+	}
 }

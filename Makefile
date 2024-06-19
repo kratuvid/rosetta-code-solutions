@@ -18,3 +18,5 @@ run: $(target)
 
 precompile:
 	g++ $(base_flags) -x c++-system-header $(what)
+
+.PHONY: clean run precompile
