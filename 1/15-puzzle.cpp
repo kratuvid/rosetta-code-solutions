@@ -93,7 +93,7 @@ bool input()
 
 	unsigned move;
 	std::cin >> move;
-    if (move == 0 || !std::cin)
+    if (move == 0)
 		return true;
 
 	int chosen_index = -1;
@@ -104,7 +104,7 @@ bool input()
 		}
 	}
 
-	if (chosen_index == -1)
+	if (chosen_index == -1 || !std::cin)
 		std::println("Not a valid move");
 	else
 		std::swap(board[zero_index], board[index[chosen_index]]);
