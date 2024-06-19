@@ -1,5 +1,5 @@
-#include <array>
-#include <print>
+import <array>;
+import <print>;
 using namespace std;
 
 consteval auto perform()

@@ -1,0 +1,1 @@
+/home/mns/Kut/cpp/solutions-rosetta-code/Makefile

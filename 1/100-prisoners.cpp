@@ -1,78 +1,56 @@
-#include <print>
-#include <random>
-#include <iostream>
-#include <iomanip>
+// BROKEN
+
+import <algorithm>;
+import <array>;
+import <iomanip>;
+import <iostream>;
+import <numeric>;
+import <print>;
+import <random>;
+import <ranges>;
 using namespace std;
 
 random_device rdev;
 mt19937 reng(rdev());
 uniform_int_distribution<int> dist(0, 99);
 
-void generate(int state[100])
+using state_t = std::array<int, 100>;
+
+auto generate()
 {
-	for (int i=0; i < 100; i++)
-		state[i] = i;
-	for (int i=0; i < 50; i++)
-	{
-		const int j = dist(reng), k = dist(reng);
-		if (j != k) std::swap(state[j], state[k]);
-	}
+	state_t state;
+	std::iota(state.begin(), state.end(), 0);
+	for (auto _ : std::views::iota(0, 100)) {
+		const int i = dist(reng), k = dist(reng);
+		if (i != k) std::swap(state[i], state[k]);
+	};
+	return state;
 }
 
-bool random_do(int state[100])
+bool play(state_t const& state, bool is_random)
 {
-	bool drawers[100] {};
-
-	for (int prisoner=0; prisoner < 100; prisoner++)
-	{
+	for (int prisoner : std::views::iota(0, 100)) {
 		bool found = false;
-		int countdown = 50;
+		int opened = 0;
+		int drawer = is_random ? dist(reng) : prisoner;
+		std::array<bool, 100> drawers_state {};
 
-		while (countdown != 0)
+		while (opened < 50)
 		{
-			int chosen_drawer = dist(reng);
-			if (drawers[chosen_drawer]) continue;
-			else drawers[chosen_drawer] = true;
+			if (drawers_state[drawer]) {
+				if (is_random) { drawer = dist(reng); continue; }
+				else break;
+			}
+			
+			drawers_state[drawer] = true;
 
-			if (state[chosen_drawer] == prisoner)
-			{
+			if (state[drawer] == prisoner) {
 				found = true;
 				break;
 			}
 
-			countdown--;
-		}
-
-		if (!found)
-			return false;
-	}
-
-	return true;
-}
-
-bool optimal_do(int state[100])
-{
-	bool drawers[100] {};
-
-	for (int prisoner=0; prisoner < 100; prisoner++)
-	{
-		bool found = false;
-		int countdown = 50;
-
-		int chosen_drawer = prisoner;
-		while (countdown != 0)
-		{
-			if (drawers[chosen_drawer]) continue;
-			else drawers[chosen_drawer] = true;
-
-			if (state[chosen_drawer] == prisoner)
-			{
-				found = true;
-				break;
-			}
-
-			chosen_drawer = state[chosen_drawer];
-			countdown--;
+			drawer = is_random ? dist(reng) : state[drawer];
+			opened++;
 		}
 
 		if (!found)
@@ -84,30 +62,19 @@ bool optimal_do(int state[100])
 
 int main()
 {
-	int state[100];
-	generate(state);
+	auto state = generate();
 
-	int successes = 0;
-	const unsigned trials = unsigned(10'000);
-	for (unsigned i=0; i < trials; i++)
-	{
-		bool win = random_do(state);
-		if (win) successes++;
+	const unsigned trials = 100'0000u * 1000u;
 
-		cout << setprecision(4) << "\r" << i / double(trials) << "%   ";
+	cout.precision(4);
+	unsigned success[2] {};
+	for (unsigned trial : std::views::iota(0u, trials)) {
+		if (play(state, true)) success[0]++;
+		if (play(state, false)) success[1]++;
+
+		std::print("\r{:.4f}%, {} {} ", trial * 100.0 / double(trials), success[0], success[1]);
 		cout.flush();
 	}
-	println("\rSuccess rate (random): {}", (successes * 100.0) / double(trials));
-
-	successes = 0;
-	if (0)
-	for (unsigned i=0; i < trials; i++)
-	{
-		bool win = optimal_do(state);
-		if (win) successes++;
-
-		cout << setprecision(4) << "\r" << i / double(trials) << "%   ";
-		cout.flush();
-	}
-	println("\rSuccess rate (optimal): {}", (successes * 100.0) / double(trials));
+	println("\rProbability (random): {}", success[0] / double(trials));
+	println("\rProbability (optimal): {}", success[1] / double(trials));
 }
